@@ -1,0 +1,13 @@
+# Local development secrets for `wrangler dev` / OpenNext preview.
+# Copy this file to `.dev.vars` and fill in real values. NEVER commit `.dev.vars`.
+# In production, set these with `wrangler secret put <NAME>` or in the Cloudflare
+# dashboard (see SETUP_AND_OPS.md §4.6).
+
+# mem0 — longitudinal case memory (lib/memory.ts)
+MEM0_API_KEY=
+
+# Composio — email-to-clinic + calendar reminder actions (lib/actions.ts)
+COMPOSIO_API_KEY=
+
+# OPTIONAL: external vision fallback via Nebius AI Studio (lib/models.ts)
+# NEBIUS_API_KEY=

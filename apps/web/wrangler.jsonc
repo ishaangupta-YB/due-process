@@ -1,0 +1,73 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dueprocess",
+  "main": "worker.ts",
+  "compatibility_date": "2025-03-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+
+  // Workers AI — no resource to create; binding enables Workers AI. (SETUP §4)
+  "ai": {
+    "binding": "AI"
+  },
+
+  // AI Search (RAG, formerly AutoRAG) — production namespace binding. Shape confirmed
+  // against https://developers.cloudflare.com/ai-search/usage/workers-binding/ : a
+  // namespace binding uses "ai_search_namespaces" (queried at runtime via env.AI_SEARCH).
+  // NOTE: this key is validated by wrangler v4+. The installed wrangler 3.114 only WARNS
+  // ("unexpected field") and ignores it locally, so `build`/`preview` still work; bump to
+  // wrangler v4 in Wave 1 (P1-A) once the namespace is created (SETUP_AND_OPS §4.4). Use a
+  // SEPARATE "*-eval" namespace for the eval harness — never the production one.
+  "ai_search_namespaces": [
+    {
+      "binding": "AI_SEARCH",
+      "namespace": "dueprocess-ca"
+    }
+  ],
+
+  // D1 (relational: cases, qa_history, documents). Replace database_id after creation.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dueprocess",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // R2 (uploaded notice images, generated PDFs).
+  "r2_buckets": [
+    {
+      "binding": "DOCS_BUCKET",
+      "bucket_name": "dueprocess-docs"
+    }
+  ],
+
+  // Durable Objects (per-case state + deadline reminder alarm).
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "CASE_DO",
+        "class_name": "CaseDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["CaseDO"]
+    }
+  ]
+
+  // Secrets — NEVER committed here or to Git. Set via `wrangler secret put <NAME>` or the
+  // dashboard (SETUP_AND_OPS §4.6); local-dev values live in .dev.vars (see .dev.vars.example):
+  //   MEM0_API_KEY      — mem0 wrapper (lib/memory.ts)
+  //   COMPOSIO_API_KEY  — Composio actions (lib/actions.ts)
+  //   NEBIUS_API_KEY    — OPTIONAL external vision fallback (lib/models.ts)
+}

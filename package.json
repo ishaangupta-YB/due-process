@@ -1,0 +1,21 @@
+{
+  "name": "dueprocess",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DueProcess — AI tool helping California tenants respond to eviction lawsuits before the legal deadline.",
+  "scripts": {
+    "build": "pnpm -C apps/web build",
+    "dev": "pnpm -C apps/web dev",
+    "preview": "pnpm -C apps/web preview",
+    "test": "pnpm -C apps/web test",
+    "typecheck": "pnpm -C apps/web exec tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "pnpm@11.5.1"
+}
