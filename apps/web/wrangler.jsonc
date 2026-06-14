@@ -18,12 +18,8 @@
   },
 
   // AI Search (RAG, formerly AutoRAG) — production namespace binding. Shape confirmed
-  // against https://developers.cloudflare.com/ai-search/usage/workers-binding/ : a
-  // namespace binding uses "ai_search_namespaces" (queried at runtime via env.AI_SEARCH).
-  // NOTE: this key is validated by wrangler v4+. The installed wrangler 3.114 only WARNS
-  // ("unexpected field") and ignores it locally, so `build`/`preview` still work; bump to
-  // wrangler v4 in Wave 1 (P1-A) once the namespace is created (SETUP_AND_OPS §4.4). Use a
-  // SEPARATE "*-eval" namespace for the eval harness — never the production one.
+  // against https://developers.cloudflare.com/ai-search/usage/workers-binding/ .
+  // Use a SEPARATE "*-eval" namespace for the eval harness — never the production one.
   "ai_search_namespaces": [
     {
       "binding": "AI_SEARCH",
