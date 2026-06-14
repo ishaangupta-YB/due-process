@@ -84,7 +84,7 @@ Owns: `apps/web/lib/extraction.ts` + its test only. (Also touched shared `pnpm-w
 - [x] Unreadable/invalid date → `serviceDateISO: null` + field in `unreadableFields`; never guesses
 - [x] Bad/invalid model output → low-confidence safe fallback, never throws raw model text
 - [x] Injectable `ai` dep for testability (signature preserved)
-- [ ] **GAP:** `app/api/intake/route.ts` is NOT wired to `extractNoticeFacts` (out of P1-C's lane). No wave task currently owns this wiring — assign in Wave 2/3.
+- [x] **GAP RESOLVED (2026-06-14):** `app/api/intake/route.ts` now wired to `extractNoticeFacts` (JSON `{imageBase64,text,language}` + multipart `image`) on `main`.
 
 ### P1-D — Python eval harness + FastAPI
 
@@ -104,7 +104,7 @@ Owns: `apps/eval/` only.
 - [x] Merged A, B, C, D into `main` (`83f8cfe`, `c01f19d`, `dc111af`, `48ad30f`) — no conflicts
 - [x] `tsc --noEmit` clean + `pnpm test` green on the merged tree (**26/26 tests pass**, 2026-06-14)
 - [x] Fixed `pnpm-workspace.yaml` — removed the broken `allowBuilds` placeholder block (resolves the old deps-status failure)
-- [ ] Commit + push the merged `main` (amended deadline engine + pnpm fix + TASKS.md)
+- [x] Committed + pushed merged `main` (`e045411`, 2026-06-14)
 
 ---
 
@@ -116,13 +116,46 @@ Owns: `apps/eval/` only.
 - Lockfile: agents should add NO new deps; if one must, regenerate `pnpm-lock.yaml` via `pnpm install` at merge.
 
 ### P2-E — Grounded answer + abstention pipeline (depends on P1-A)
-Status: `[ ] TODO` — owns `lib/grounding.ts`, `app/api/answer/route.ts` + tests.
+Status: `[x] DONE` — merged to `main` (`e7e7d76`, branch `p2e-grounding` `a947244`). 12 tests green; reviewed in-lane.
+Owns: `lib/grounding.ts`, `app/api/answer/route.ts` + test only.
+
+- [x] `retrieve()` top-k (lazy import; injectable for tests); retrieval/model errors → abstain
+- [x] Confidence gate: no usable chunk (real url+text) OR `bestScore < GROUNDING_MIN_SCORE` (0.5) → abstain WITHOUT calling the model
+- [x] REASONING model with strict system prompt (answer only from sources, no outside knowledge, no computed dates, reply in user language)
+- [x] **Citations enforced in code** — model returns only source NUMBERS; every `Citation` is rebuilt from retrieved-chunk metadata, so a URL can never be model-fabricated (CLAUDE.md §1.4); snippets ≤25 words
+- [x] Downgrade rule: `answered` with zero valid citations (or non-JSON / out-of-range / error) → forced `abstained`; `referral` + not-a-lawyer note ALWAYS present
+- [x] `response_format` JSON-mode shape VERIFIED vs Cloudflare docs; `extractResponseText` handles the `{response:{...}}` wrapper
+- [ ] **Runtime (Wave 3):** confirm the `answered` path fires with the live AI Search index + deployed model. If `kimi-k2.6` over-abstains, set `MODEL_REASONING=@cf/meta/llama-3.3-70b-instruct-fp8-fast` (env-only, no code change).
 
 ### P2-F — UD-105 Answer draft generation (depends on P1-A)
-Status: `[ ] TODO` — owns `lib/documents.ts`, `app/api/document/route.ts` + tests.
+Status: `[x] DONE` — merged to `main` (`0517d95`, branch `p2f-documents` `39d1a35`). 17 tests green; reviewed in-lane.
+Owns: `lib/documents.ts`, `app/api/document/route.ts` + test only.
+
+- [x] `generateAnswerDraft({caseId})` → `{r2Key, downloadUrl}`; deps (`getCase`/`retrieve`/`ai`/`bucket`) injectable, resolve from CF context in prod
+- [x] `getCase` consumed read-only; signature matches `db.getCase(id):Promise<CaseRecord|null>` (cross-lane contract OK)
+- [x] Caption mapping pure; unknowns → `BLANK_MARKER`; court case number ALWAYS blank (never in NoticeFacts); nothing fabricated (CLAUDE.md §1.4)
+- [x] Defenses: REASONING phrases only; a defense is kept ONLY if its `sourceId` matches a retrieved chunk with a real URL; labeled "potential defense to discuss with a legal-aid attorney"
+- [x] `pdf-lib` render; "DRAFT - NOT FILED..." watermark on every page; clean plain-language draft (does NOT reproduce the copyrighted form layout); stored in R2 `DOCS_BUCKET`; GET `?key=` streams it back
+- [ ] Verify `OFFICIAL_FORM_URL` (`courts.ca.gov/documents/ud105.pdf`) resolves before demo (reference link only, not a citation)
 
 ### P2-G — Case persistence: D1 + Durable Object alarm + mem0 (depends on P0)
-Status: `[ ] TODO` — owns `lib/db.ts`, `lib/memory.ts`, `durable-objects/case-do.ts`, `app/api/case/route.ts` + tests.
+Status: `[x] DONE` — merged to `main` (`35f6abe`, branch `p2g-persistence` `9aaaa37`). 22 tests green (8 db + 7 mem0 + 7 DO); reviewed in-lane.
+Owns: `lib/db.ts`, `lib/memory.ts`, `durable-objects/case-do.ts`, `app/api/case/route.ts` + tests.
+
+- [x] `db.ts` typed CRUD (`createCase`/`getCase`/`updateCase` + `addQAEntry`/`addDocument`), zod-validated, multi-table writes in one `DB.batch`; binding via `getCloudflareContext` (injectable `db?`). Back-compatible with the P0 stub.
+- [x] `memory.ts` mem0 Platform v3 REST via `fetch` (no SDK); scoped `user_id=caseId`; `infer:false` (verbatim facts); never logs key/bodies/PII
+- [x] `case-do.ts` `CaseDO` (exported; matches `worker.ts` re-export) with pure `computeReminderAt` — never schedules in the past (null for passed/invalid; clamps to now); `alarm()` marks reminder due; Composio best-effort + `COMPOSIO_API_KEY`-gated (not hard-coupled)
+- [x] `app/api/case/route.ts` POST creates (D1 authoritative) then best-effort mem0 seed + DO schedule; GET `?id=` returns case + reminder state; enhancement failures never break CRUD
+- [ ] **Runtime:** needs D1 migration applied + `MEM0_API_KEY` set to exercise live (see Human Action Items)
+
+### Wave 2 merge gate
+
+- [x] All three branches committed, reviewed, lane-checked (only `apps/web` files; no `types.ts`/`models.ts`/`wrangler.jsonc`/`worker.ts`/`package.json` touched)
+- [x] Cross-lane contracts verified: `documents.ts`→`db.getCase`, `case-do.ts` exports `CaseDO` (matches `worker.ts`), mem0 via REST
+- [x] Root housekeeping committed (`b9aadb9`): gitignore agent transcripts; launch-wave2 single-window panes
+- [x] Merged G→E→F into `main` (`35f6abe`, `e7e7d76`, `0517d95`) — no conflicts
+- [x] `tsc --noEmit` clean + full `vitest run` green on merged tree (**77/77 tests pass**, 2026-06-14)
+- [ ] Push `main` to origin
 
 ---
 
@@ -160,6 +193,7 @@ Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST.
    CCP §1167(b) text in `corpus/statute-ccp-1167.md` states +5 **court** days for mail/SoS.
    Substituted service (§415.20) differs again. A licensed attorney must confirm.
    **OPEN DECISION:** whether the hero countdown shows the EARLIEST (personal-service) date for safety vs the current extended date. See P1-B.
+4. **REASONING JSON mode** — `grounding.ts`/`documents.ts` use `response_format` (shape VERIFIED vs Cloudflare docs). `kimi-k2.6` is documented on the Workers AI Models page to support structured outputs but is NOT on the older JSON-Mode feature list; if it can't comply, Workers AI returns a `JSON Mode couldn't be met` error and the code safely abstains. Mitigation if over-abstaining in the demo: set `MODEL_REASONING=@cf/meta/llama-3.3-70b-instruct-fp8-fast` (env-only, no code change).
 
 ## Verification Log
 
@@ -171,3 +205,4 @@ Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST.
 | 2026-06-14 | `p1d-eval` | Reviewed `apps/eval/` (`892e16a`): separate `"eval"` namespace + anti-production guard, no `apps/web` imports. In-lane. | Cascade |
 | 2026-06-14 | (docs) | Verified AI Search API against developers.cloudflare.com: runtime binding/search/response shapes + namespaced REST upload endpoints + custom_metadata schema all match `ai-search.ts`/`upload-corpus.ts`. Retracted earlier naming-mismatch concern. | Cascade |
 | 2026-06-14 | `main` | Merged all 4 Wave 1 branches (no conflicts). Applied deadline decision (non-personal = earliest date). Fixed pnpm-workspace.yaml. `tsc --noEmit` clean, `pnpm test` 26/26 pass. | Cascade |
+| 2026-06-14 | `main` | Reviewed + merged Wave 2 (P2-E/F/G) via git: lanes clean, contracts match (`getCase`, `CaseDO`), citations code-enforced, DO past-alarm guard, mem0 REST. Verified `response_format` shape + kimi structured-output support vs Cloudflare docs. Merged G→E→F, `tsc` clean, **77/77 tests pass**. | Cascade |
