@@ -4,7 +4,7 @@
 // single source of truth. Response deadline = 10 COURT days after PERSONAL service of
 // Summons & Complaint (CCP § 1167 as amended by AB 2347, eff. 2025-01-01); the clock
 // starts the day AFTER service; court days exclude weekends + CA court holidays.
-// Non-personal service adds extra days AND raises an uncertainty flag.
+// Non-personal service reports the SAME earliest date and flags that more time MAY apply.
 //
 // NEVER output "5 days" — that is the outdated pre-2025 rule (CLAUDE.md §2).
 //
@@ -75,13 +75,13 @@ export const HOLIDAYS_CA: ReadonlySet<string> = new Set<string>([
 // This is the CURRENT rule — the pre-2025 rule of 5 days is OUTDATED (CLAUDE.md §2).
 const COURT_DAYS_TO_RESPOND = 10;
 
-// VERIFY against CCP § 415.20 / § 1162 / § 1167.
-// For NON-personal service (substituted service, or post-and-mail), service is generally
-// not legally "complete" until additional days pass, which defers the start of the
-// response clock. The exact number for unlawful detainer is NOT certain to this engine,
-// so we encode a conservative, clearly-flagged value and ALWAYS raise an uncertainty
-// assumption + keep mustVerify: true. Do not present this as authoritative.
-const EXTRA_CALENDAR_DAYS_NON_PERSONAL = 10;
+// NON-personal service (substituted / post-and-mail) MAY grant additional time before the
+// response is due (e.g. CCP § 1167(b) adds court days for mail service; CCP § 415.20 / § 1162
+// service is not "complete" until extra days pass). That extra time is genuinely uncertain
+// for unlawful detainer and would only ever push the deadline LATER. To stay safe (CLAUDE.md
+// §1.1) we NEVER bake it into the headline date — we always report the EARLIEST defensible
+// deadline and flag the possible extension as upside in the assumptions. Do not change this
+// to a later date without attorney confirmation.
 
 // Plain-language note attached to every result (CLAUDE.md §1.1, §1.3).
 const VERIFY_NOTE =
@@ -167,9 +167,10 @@ function yearsCovered(...dates: Date[]): boolean {
  * Rules (CLAUDE.md §2):
  *  - Personal service: 10 COURT days, counting from the DAY AFTER service, excluding
  *    weekends and California court holidays.
- *  - Non-personal service (substituted / posted_mail): service is treated as completing
- *    `EXTRA_CALENDAR_DAYS_NON_PERSONAL` calendar days later (VERIFY), then the same
- *    10-court-day count runs. An uncertainty assumption is always added.
+ *  - Non-personal service (substituted / posted_mail): the headline deadline is the SAME
+ *    earliest 10-court-day date (we never bake in uncertain extra time). An assumption
+ *    explains the user MAY have more time and must VERIFY — biasing EARLY so they cannot
+ *    miss the true deadline.
  *  - Unknown method OR missing/invalid service date: responseDeadlineISO is null with an
  *    explanatory assumption. The engine NEVER guesses a date.
  *
@@ -212,40 +213,26 @@ export function computeResponseDeadline(input: DeadlineInput): DeadlineResult {
   }
 
   const assumptions: string[] = [];
-  let clockStart = serviceDate;
 
-  // --- Non-personal service: defer the start of the clock, flag uncertainty. ---
-  if (serviceMethod !== "personal") {
-    clockStart = addCalendarDays(serviceDate, EXTRA_CALENDAR_DAYS_NON_PERSONAL);
-    assumptions.push(
-      `Service method is "${serviceMethod}" (non-personal), so extra time likely applies before the response clock starts.`,
-    );
-    assumptions.push(
-      `This estimate assumes service is not legally complete until ${EXTRA_CALENDAR_DAYS_NON_PERSONAL} calendar days after the service date. This added time is NOT certain for unlawful detainer — VERIFY against CCP § 415.20 / § 1162 / § 1167.`,
-    );
-  }
-
-  const deadline = addCourtDays(clockStart, COURT_DAYS_TO_RESPOND);
+  // The headline deadline is ALWAYS the EARLIEST defensible date: 10 court days after
+  // service, counting from the day after service. We deliberately bias EARLY (CLAUDE.md
+  // §1.1) so a tenant can never miss the true deadline. Any extra time non-personal
+  // service may grant is surfaced as upside below — never baked into a later date.
+  const deadline = addCourtDays(serviceDate, COURT_DAYS_TO_RESPOND);
 
   assumptions.push(
-    `Counted ${COURT_DAYS_TO_RESPOND} court days (excluding Saturdays, Sundays, and California court holidays), starting the day after ${
-      serviceMethod === "personal" ? "service" : "service is deemed complete"
-    }, per CCP § 1167 as amended by AB 2347 (effective 2025-01-01). The prior 5-day rule is outdated.`,
+    `Counted ${COURT_DAYS_TO_RESPOND} court days (excluding Saturdays, Sundays, and California court holidays), starting the day after service, per CCP § 1167 as amended by AB 2347 (effective 2025-01-01). The prior 5-day rule is outdated.`,
   );
 
-  // For non-personal service, surface the EARLIEST possible (personal-service) deadline as
-  // a conservative safety target so the user does not wait longer than may be allowed.
+  // --- Non-personal service: you MAY have more time, but we show the earliest. ---
   if (serviceMethod !== "personal") {
-    const earliest = addCourtDays(serviceDate, COURT_DAYS_TO_RESPOND);
     assumptions.push(
-      `To be safe, do not wait: if service were treated as personal, the deadline would be as early as ${toISODate(
-        earliest,
-      )}.`,
+      `Service method is "${serviceMethod}" (non-personal). You MAY have additional time before your response is due — mail service can add court days (CCP § 1167(b)), and substituted or post-and-mail service may not be legally "complete" until extra days pass (CCP § 415.20 / § 1162). This date shows the EARLIEST possible deadline so you do not miss it — do NOT wait past it. VERIFY the exact deadline with the court or a self-help center.`,
     );
   }
 
   // Reduced-confidence flag if any relevant date falls outside the holiday table.
-  if (!yearsCovered(serviceDate, clockStart, deadline)) {
+  if (!yearsCovered(serviceDate, deadline)) {
     assumptions.push(
       `The California court-holiday table (${HOLIDAY_CALENDAR_VERSION}) only covers ${HOLIDAY_YEARS_COVERED.join(
         " and ",

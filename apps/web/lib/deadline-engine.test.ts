@@ -63,34 +63,50 @@ describe("computeResponseDeadline — personal service", () => {
 });
 
 describe("computeResponseDeadline — non-personal service", () => {
-  it("substituted service adds extra calendar days before counting, and flags uncertainty", () => {
-    // Base 2026-06-01 (Mon). +10 calendar days -> clock starts 2026-06-11 (Thu).
-    // Jun 12 Fri(1), Jun 15 Mon(2)..Jun 18 Thu(5), Jun 19 Fri HOLIDAY (Juneteenth),
-    // Jun 22 Mon(6)..Jun 26 Fri(10) -> 2026-06-26.
+  it("substituted service shows the EARLIEST (personal-baseline) date and flags possible extra time", () => {
+    // Safety-first: the headline is the earliest defensible date = 10 court days from
+    // 2026-06-01 (Mon) = 2026-06-15, identical to personal service. Any extra time that
+    // non-personal service may grant is surfaced as upside in the assumptions, never baked
+    // into a later (riskier) headline date.
     const r = computeResponseDeadline({
       serviceDateISO: "2026-06-01",
       serviceMethod: "substituted",
     });
-    expect(r.responseDeadlineISO).toBe("2026-06-26");
+    expect(r.responseDeadlineISO).toBe("2026-06-15");
     expect(r.courtDaysUsed).toBe(10);
     expect(r.serviceMethod).toBe("substituted");
     expect(r.mustVerify).toBe(true);
-    // Must raise an uncertainty assumption mentioning VERIFY and the statutes.
+    // Must raise an uncertainty assumption mentioning VERIFY and the relevant statutes.
     expect(r.assumptions.some((a) => /VERIFY/.test(a))).toBe(true);
     expect(r.assumptions.some((a) => /415\.20|1162|1167/.test(a))).toBe(true);
-    // Must surface the earlier personal-service deadline (2026-06-15) as a safety target.
-    expect(r.assumptions.some((a) => a.includes("2026-06-15"))).toBe(true);
+    // Must tell the user they MAY have more time (the extension is upside, not baked in).
+    expect(
+      r.assumptions.some((a) => /additional time|more time|MAY have/i.test(a)),
+    ).toBe(true);
   });
 
-  it("posted_mail service is treated like other non-personal service (extra days + flag)", () => {
-    // Same base date/logic as substituted -> 2026-06-26.
+  it("posted_mail service is treated like substituted (earliest date + flag)", () => {
     const r = computeResponseDeadline({
       serviceDateISO: "2026-06-01",
       serviceMethod: "posted_mail",
     });
-    expect(r.responseDeadlineISO).toBe("2026-06-26");
+    expect(r.responseDeadlineISO).toBe("2026-06-15");
     expect(r.serviceMethod).toBe("posted_mail");
     expect(r.assumptions.some((a) => /VERIFY/.test(a))).toBe(true);
+  });
+
+  it("non-personal headline is NEVER later than the personal-service deadline (safety bias)", () => {
+    const personal = computeResponseDeadline({
+      serviceDateISO: "2026-06-01",
+      serviceMethod: "personal",
+    });
+    for (const method of ["substituted", "posted_mail"] as const) {
+      const r = computeResponseDeadline({
+        serviceDateISO: "2026-06-01",
+        serviceMethod: method,
+      });
+      expect(r.responseDeadlineISO).toBe(personal.responseDeadlineISO);
+    }
   });
 });
 

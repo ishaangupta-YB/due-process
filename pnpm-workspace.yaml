@@ -1,11 +1,7 @@
 packages:
   - "apps/web"
 
-allowBuilds:
-  esbuild: set this to true or false
-  sharp: set this to true or false
-  workerd: set this to true or false
-
+# Approve native build scripts for these deps (pnpm v10+ blocks them by default).
 onlyBuiltDependencies:
   - esbuild
   - sharp
