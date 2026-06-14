@@ -1,0 +1,14 @@
+# Cached HuggingFace dataset shards — large, never committed.
+data/
+
+# Eval outputs (metrics.json, summary.md). Produced by a real run on the
+# operator's machine. Never commit results — we ship code, not numbers, so we
+# can never accidentally ship fabricated or stale metrics.
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
