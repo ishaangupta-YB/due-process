@@ -28,6 +28,6 @@
     "@types/react-dom": "^19.0.3",
     "typescript": "^5.7.3",
     "vitest": "^3.0.4",
-    "wrangler": "^3.107.0"
+    "wrangler": "^4.0.0"
   }
 }

@@ -36,7 +36,7 @@
     {
       "binding": "DB",
       "database_name": "dueprocess",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "51a3a697-340c-4c42-8db2-dc9c90365b6c",
       "migrations_dir": "migrations"
     }
   ],
