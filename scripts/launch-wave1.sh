@@ -165,6 +165,7 @@ devin_cmd() {                          # devin_cmd <model> <promptfile>
 
 send_or_type() {                       # send_or_type <target> <cmd>
   local target="$1" cmd="$2"
+  sleep 0.5                            # let the pane's shell finish initialising before typing
   if [ "$AUTOSTART" = "true" ]; then
     tmux send-keys -t "$target" "$cmd" C-m
   else
