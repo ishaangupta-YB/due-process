@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 
 export interface IntakeSubmission {
   imageBase64?: string;
+  audioBase64?: string;
+  audioMimeType?: string;
   text?: string;
   language: string;
 }
@@ -17,7 +19,20 @@ const LANGUAGES: Array<{ code: string; label: string }> = [
   { code: "ko", label: "한국어 (Korean)" },
 ];
 
-type Mode = "photo" | "text";
+type Mode = "photo" | "text" | "voice";
+
+/** Read a Blob/File as bare base64 (strip the "data:<mime>;base64," prefix). */
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result);
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("read failed"));
+    reader.readAsDataURL(blob);
+  });
+}
 
 export function IntakeStep({
   onSubmit,
@@ -37,6 +52,15 @@ export function IntakeStep({
   const [fileName, setFileName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Voice intake state.
+  const [recording, setRecording] = useState(false);
+  const [audioBase64, setAudioBase64] = useState<string | null>(null);
+  const [audioMime, setAudioMime] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
   function handleFile(file: File | undefined) {
     if (!file) return;
     setFileName(file.name);
@@ -50,13 +74,61 @@ export function IntakeStep({
     reader.readAsDataURL(file);
   }
 
+  async function startRecording() {
+    setVoiceError(null);
+    setAudioBase64(null);
+    setAudioUrl(null);
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setVoiceError("Recording isn't supported in this browser. Try typing instead.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const mime = recorder.mimeType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: mime });
+        try {
+          setAudioBase64(await blobToBase64(blob));
+          setAudioMime(mime);
+          setAudioUrl(URL.createObjectURL(blob));
+        } catch {
+          setVoiceError("We couldn't process the recording. Please try again.");
+        }
+      };
+      recorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+    } catch {
+      setVoiceError("We need microphone permission to record. You can also type instead.");
+    }
+  }
+
+  function stopRecording() {
+    recorderRef.current?.stop();
+    recorderRef.current = null;
+    setRecording(false);
+  }
+
   const canSubmit =
-    !loading && (mode === "photo" ? !!imageBase64 : text.trim().length > 0);
+    !loading &&
+    (mode === "photo"
+      ? !!imageBase64
+      : mode === "voice"
+        ? !!audioBase64 && !recording
+        : text.trim().length > 0);
 
   function submit() {
     if (!canSubmit) return;
     onSubmit({
       imageBase64: mode === "photo" ? imageBase64 ?? undefined : undefined,
+      audioBase64: mode === "voice" ? audioBase64 ?? undefined : undefined,
+      audioMimeType: mode === "voice" ? audioMime ?? undefined : undefined,
       text: mode === "text" ? text.trim() : undefined,
       language,
     });
@@ -108,9 +180,53 @@ export function IntakeStep({
         >
           Paste / type text
         </button>
+        <button
+          type="button"
+          aria-pressed={mode === "voice"}
+          onClick={() => setMode("voice")}
+        >
+          Speak it
+        </button>
       </div>
 
-      {mode === "photo" ? (
+      {mode === "voice" ? (
+        <div className="field">
+          <label>Describe your situation out loud</label>
+          <p className="hint">
+            Speak in your own language — for example, when you were served, how
+            the papers were delivered, and the reason given. We transcribe it and
+            read out the key facts; we never guess.
+          </p>
+          <div className="btn-row" style={{ marginTop: "0.5rem" }}>
+            {!recording ? (
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={startRecording}
+                disabled={loading}
+              >
+                {audioBase64 ? "Record again" : "Start recording"}
+              </button>
+            ) : (
+              <button type="button" className="btn" onClick={stopRecording}>
+                <span className="spinner" aria-hidden="true" /> Stop recording
+              </button>
+            )}
+          </div>
+          {audioUrl && !recording && (
+            <>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <audio src={audioUrl} controls style={{ marginTop: "0.6rem", width: "100%" }} />
+              <p className="hint">Listen back, then press “Read my notice”.</p>
+            </>
+          )}
+          {voiceError && (
+            <p className="note note--error" role="alert">
+              {voiceError}
+            </p>
+          )}
+        </div>
+      ) : mode === "photo" ? (
         <div className="field">
           <label htmlFor="file">Photo of your notice</label>
           <input

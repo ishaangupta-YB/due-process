@@ -9,6 +9,19 @@ MEM0_API_KEY=
 
 # Composio — email-to-clinic + calendar reminder actions (lib/actions.ts)
 COMPOSIO_API_KEY=
+# OPTIONAL Composio config (sensible defaults are used if unset):
+#   COMPOSIO_USER_ID            — Composio user/entity that owns the connected accounts
+#   COMPOSIO_CONNECTED_ACCOUNT_ID — pin a specific connected account (Gmail / Calendar)
+#   COMPOSIO_EMAIL_TOOL         — defaults to GMAIL_SEND_EMAIL
+#   COMPOSIO_CALENDAR_TOOL      — defaults to GOOGLECALENDAR_CREATE_EVENT
+#   COMPOSIO_BASE_URL           — defaults to https://backend.composio.dev/api/v3
+#   ACTIONS_TIMEZONE            — IANA tz for reminders, defaults to America/Los_Angeles
+#   APP_BASE_URL                — absolute base for the draft link in clinic emails
+# COMPOSIO_USER_ID=
+# COMPOSIO_CONNECTED_ACCOUNT_ID=
+
+# OPTIONAL voice intake STT engine: "whisper" (default) or "nova-3" (lib/stt.ts)
+# STT_ENGINE=whisper
 
 # OPTIONAL: external vision fallback via Nebius AI Studio (lib/models.ts)
 # NEBIUS_API_KEY=

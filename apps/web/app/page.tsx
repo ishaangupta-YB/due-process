@@ -7,6 +7,7 @@ import { NoticeFactsStep } from "./components/NoticeFactsStep";
 import { DeadlineCountdown } from "./components/DeadlineCountdown";
 import { RightsChat } from "./components/RightsChat";
 import { DocumentStep } from "./components/DocumentStep";
+import { ActionsStep } from "./components/ActionsStep";
 
 export default function Home() {
   const [language, setLanguage] = useState("en");
@@ -155,6 +156,7 @@ export default function Home() {
           <DeadlineCountdown deadline={deadline} />
           <RightsChat caseId={caseId} language={language} />
           <DocumentStep caseId={caseId} />
+          <ActionsStep caseId={caseId} deadlineISO={deadline.responseDeadlineISO} />
         </>
       )}
 
