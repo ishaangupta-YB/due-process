@@ -11,4 +11,9 @@ export default nextConfig;
 // `getCloudflareContext()` during local `next dev`.
 // Verify import path against https://opennext.js.org/cloudflare before changing.
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
-initOpenNextCloudflareForDev();
+// Dev-only: opens a remote-binding proxy that needs Cloudflare auth. Guarding it to
+// development lets `next build` run without `wrangler login` / CLOUDFLARE_API_TOKEN,
+// with zero change to `next dev` behaviour (standard OpenNext pattern).
+if (process.env.NODE_ENV === "development") {
+  initOpenNextCloudflareForDev();
+}
