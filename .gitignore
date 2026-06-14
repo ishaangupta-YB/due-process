@@ -43,3 +43,6 @@ coverage/
 output-p2e.txt
 output-p2f.txt
 output-p2g.txt
+
+# local-only testing runbook (contains the live URL; intentionally NOT committed)
+TESTING.md

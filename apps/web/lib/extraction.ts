@@ -103,7 +103,8 @@ const SYSTEM_PROMPT = [
   "- statedReason is the landlord's stated reason (e.g. nonpayment of rent) verbatim/paraphrased,",
   "  or null if not stated.",
   "- extractionConfidence is your overall confidence from 0 to 1 that the facts are correct.",
-  "Respond with ONLY a JSON object that matches the provided schema. No prose.",
+  "Respond with ONLY a JSON object with EXACTLY these keys (no extra keys, no markdown fences, no prose):",
+  '{"noticeType": string, "serviceDateISO": "YYYY-MM-DD" or null, "serviceMethod": one of "personal"|"substituted"|"posted_mail"|"unknown", "parties": {"landlord": string or null, "tenant": string or null}, "statedReason": string or null, "extractionConfidence": number between 0 and 1, "unreadableFields": array of strings}',
 ].join("\n");
 
 /**
@@ -154,11 +155,16 @@ export async function extractNoticeFacts(
     return fallbackFacts("model returned no readable response");
   }
 
+  // Llama 4 Scout ignores `guided_json` and often wraps its JSON in a ```json code fence,
+  // so parse defensively (strip the fence / pull the first {...}) rather than a bare parse.
   let parsedJson: unknown;
-  try {
-    parsedJson = typeof rawText === "string" ? JSON.parse(rawText) : rawText;
-  } catch {
-    return fallbackFacts("model output was not valid JSON");
+  if (typeof rawText === "string") {
+    parsedJson = parseJsonLoose(rawText);
+    if (parsedJson === null) {
+      return fallbackFacts("model output was not valid JSON");
+    }
+  } else {
+    parsedJson = rawText;
   }
 
   const validated = ModelOutputSchema.safeParse(parsedJson);
@@ -223,6 +229,35 @@ function extractResponseText(result: unknown): string | object | null {
     if (response && typeof response === "object") return response as object;
   }
   return null;
+}
+
+/** Parse model text that may be fenced (```json ... ```) or have prose around the object. */
+function parseJsonLoose(text: string): unknown | null {
+  const cleaned = stripCodeFence(text);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const sub = extractFirstJsonObject(cleaned);
+    if (!sub) return null;
+    try {
+      return JSON.parse(sub);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function stripCodeFence(text: string): string {
+  const trimmed = text.trim();
+  const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
+  return fence ? fence[1].trim() : trimmed;
+}
+
+function extractFirstJsonObject(text: string): string | null {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  return text.slice(start, end + 1);
 }
 
 /** Map validated model output to a safe NoticeFacts, never trusting it blindly. */

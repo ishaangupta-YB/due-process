@@ -1,6 +1,12 @@
 // lib/ai-search.ts — Cloudflare AI Search (RAG) retrieval wrapper.
 // Uses the namespace binding configured in wrangler.jsonc (ai_search_namespaces).
-// Retrieval type is hybrid (semantic + BM25) per acceptance criteria.
+//
+// Retrieval type is VECTOR (semantic) — the `dueprocess-prod` instance is created with
+// keyword indexing DISABLED (index_method.keyword=false), so requesting "hybrid" throws
+// AI Search error 7070 ("retrieval_type 'hybrid' is not available: keyword indexing is
+// disabled"). To re-enable hybrid (semantic + BM25), recreate the instance with keyword
+// indexing on, then set this back to "hybrid". Vector-only retrieves the CA corpus well
+// (in-corpus questions score ~0.6+, out-of-corpus ~0.4).
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
@@ -86,7 +92,8 @@ export async function retrieve(
     messages: [{ role: "user", content: query }],
     ai_search_options: {
       retrieval: {
-        retrieval_type: "hybrid",
+        // VECTOR only — see header note. "hybrid" throws on this index (keyword disabled).
+        retrieval_type: "vector",
         max_num_results: k ?? 5,
         match_threshold: 0.4,
       },

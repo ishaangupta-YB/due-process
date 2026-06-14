@@ -2,10 +2,12 @@
 export const MODELS = {
   // Multimodal vision: read the eviction notice image -> structured facts. CONFIRMED.
   VISION: process.env.MODEL_VISION ?? "@cf/meta/llama-4-scout-17b-16e-instruct",
-  // High-reasoning grounded answers + document drafting. CONFIRMED (vision + structured outputs).
-  // Upgrade to "@cf/moonshotai/kimi-k2.7" ONLY after confirming a NON-code k2.7 slug exists.
-  // "@cf/moonshotai/kimi-k2.7-code" is a coding-tuned variant — do NOT use it for legal prose.
-  REASONING: process.env.MODEL_REASONING ?? "@cf/moonshotai/kimi-k2.6",
+  // Grounded answers + document drafting. Default is llama-3.3-70b (JSON-mode supported,
+  // reliable). Switched off "@cf/moonshotai/kimi-k2.6" because it was returning
+  // "Capacity temporarily exceeded" (AiError 3040) on live runs AND is not on the Workers AI
+  // JSON-mode model list, so response_format wasn't reliably honored. Set MODEL_REASONING back
+  // to a kimi slug via env when you specifically want it (and it has capacity).
+  REASONING: process.env.MODEL_REASONING ?? "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   // Fallback reasoning (TEXT-ONLY; gpt-oss accepts Chat Completions `messages` and Responses API). CONFIRMED.
   REASONING_FALLBACK: process.env.MODEL_REASONING_FALLBACK ?? "@cf/openai/gpt-oss-120b",
   // Speech-to-text (enhancement). Whisper = transcription. CONFIRMED.
