@@ -136,9 +136,7 @@ export function IntakeStep({
 
   return (
     <section className="card" aria-labelledby="intake-h">
-      <span className="card__step">
-        <span className="card__step-num">1</span> Read your notice
-      </span>
+      <span className="eyebrow">Step 1 · Read</span>
       <h2 id="intake-h">Start with your court papers</h2>
       <p className="lead">
         Upload a clear photo of the Summons &amp; Complaint you were served, or

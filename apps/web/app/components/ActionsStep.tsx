@@ -92,9 +92,7 @@ export function ActionsStep({
 
   return (
     <section className="card" aria-labelledby="actions-h">
-      <span className="card__step">
-        <span className="card__step-num">6</span> Get help &amp; stay on time
-      </span>
+      <span className="eyebrow">Get help</span>
       <h2 id="actions-h">Hand off to a clinic and set a reminder</h2>
       <p className="lead">
         Optional. With your permission, DueProcess can email a legal-aid clinic your

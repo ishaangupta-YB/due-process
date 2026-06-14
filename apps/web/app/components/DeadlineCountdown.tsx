@@ -41,9 +41,7 @@ export function DeadlineCountdown({ deadline }: { deadline: DeadlineResult }) {
   if (!deadline.responseDeadlineISO) {
     return (
       <section className="card countdown countdown--warn" aria-labelledby="dl-h">
-        <span className="card__step">
-          <span className="card__step-num">3</span> Your deadline
-        </span>
+        <span className="eyebrow">Your deadline</span>
         <h2 id="dl-h">We need a bit more to set your deadline</h2>
         <p>
           We couldn&apos;t compute a response deadline yet. Here&apos;s why:
@@ -74,9 +72,9 @@ export function DeadlineCountdown({ deadline }: { deadline: DeadlineResult }) {
       className={`card countdown ${tone ? `countdown--${tone}` : ""}`}
       aria-labelledby="dl-h"
     >
-      <span className="card__step">
-        <span className="card__step-num">3</span> Your deadline
-      </span>
+      <h2 id="dl-h" className="sr-only">
+        Your response deadline
+      </h2>
 
       <p className="countdown__label">
         {past

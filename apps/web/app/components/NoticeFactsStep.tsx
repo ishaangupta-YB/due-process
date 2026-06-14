@@ -30,9 +30,7 @@ export function NoticeFactsStep({
 
   return (
     <section className="card" aria-labelledby="facts-h">
-      <span className="card__step">
-        <span className="card__step-num">2</span> What we found
-      </span>
+      <span className="eyebrow">Step 2 · Confirm</span>
       <h2 id="facts-h">
         Here&apos;s what we read {confidenceBadge(facts.extractionConfidence)}
       </h2>

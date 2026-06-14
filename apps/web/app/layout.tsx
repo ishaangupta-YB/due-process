@@ -1,17 +1,24 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Inter } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-instrument-serif",
+  weight: ["500", "600", "700"],
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -25,7 +32,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+    >
       <body>
         <a className="skip-link" href="#main">
           Skip to main content
@@ -34,10 +44,15 @@ export default function RootLayout({
           <header className="site-header">
             <div className="site-header__inner">
               <a href="/" className="brand">
-                <span className="brand__mark" aria-hidden="true">DP</span>
+                <span className="brand__mark" aria-hidden="true">
+                  DP
+                </span>
                 DueProcess
               </a>
-              <span className="brand__tag">California • Tenant help</span>
+              <span className="brand__tag">California · Tenant help</span>
+              <span className="header-disclaimer">
+                Legal info, not a lawyer
+              </span>
             </div>
           </header>
 
@@ -56,7 +71,13 @@ export default function RootLayout({
               </p>
               <div className="footer-credits">
                 <span>Built by Ishaan Gupta</span>
-                <a href="https://github.com/ishaangupta-YB/due-process.git" target="_blank" rel="noopener noreferrer">Open source</a>
+                <a
+                  href="https://github.com/ishaangupta-YB/due-process.git"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open source
+                </a>
               </div>
             </div>
           </footer>

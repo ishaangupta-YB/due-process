@@ -114,9 +114,7 @@ export function RightsChat({
 
   return (
     <section className="card" aria-labelledby="chat-h">
-      <span className="card__step">
-        <span className="card__step-num">4</span> Ask about your rights
-      </span>
+      <span className="eyebrow">Your rights</span>
       <h2 id="chat-h">Questions about your situation</h2>
       <p className="lead">
         Answers come only from official California legal sources, with links you

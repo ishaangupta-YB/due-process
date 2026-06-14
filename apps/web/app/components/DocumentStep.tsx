@@ -31,9 +31,7 @@ export function DocumentStep({ caseId }: { caseId: string | null }) {
 
   return (
     <section className="card" aria-labelledby="doc-h">
-      <span className="card__step">
-        <span className="card__step-num">5</span> Prepare your Answer
-      </span>
+      <span className="eyebrow">Draft Answer</span>
       <h2 id="doc-h">Generate your draft Answer (UD-105)</h2>
       <p className="lead">
         We&apos;ll prepare a plain-language draft based on your case to take to a
