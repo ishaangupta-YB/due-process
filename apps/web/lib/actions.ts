@@ -12,8 +12,8 @@
 //   Consent: these are only ever invoked after EXPLICIT user consent, enforced at the
 //   route layer (app/api/actions/*). This module is the executor, not the gatekeeper.
 //
-// Composio REST API (verified against https://docs.composio.dev on 2026-06-14):
-//   - Execute a tool: POST {base}/tools/execute/{TOOL_SLUG}
+// Composio REST API (verified against https://docs.composio.dev on 2026-06-15):
+//   - Execute a tool: POST {base}/tools/execute/{TOOL_SLUG}  (v3.1 endpoint)
 //     headers: { "x-api-key": COMPOSIO_API_KEY }
 //     body:    { user_id, connected_account_id?, arguments: {...} }
 //     resp:    { data, error, successful }
@@ -27,7 +27,7 @@ import type { CaseRecord } from "./types";
 /* ------------------------------------------------------------------ */
 /* Config + dependency injection.                                      */
 
-const DEFAULT_BASE_URL = "https://backend.composio.dev/api/v3";
+const DEFAULT_BASE_URL = "https://backend.composio.dev/api/v3.1";
 const DEFAULT_EMAIL_TOOL = "GMAIL_SEND_EMAIL";
 const DEFAULT_CALENDAR_TOOL = "GOOGLECALENDAR_CREATE_EVENT";
 const DEFAULT_TIMEZONE = "America/Los_Angeles"; // California courts
@@ -66,7 +66,20 @@ function composioConfig(): ComposioConfig {
 interface ComposioResponse {
   data?: unknown;
   error?: string | null;
+  message?: string | null;
   successful?: boolean;
+  suggested_fix?: string | null;
+}
+
+/** Extract a safe, non-PII error summary from a Composio error response. */
+function safeComposioError(toolSlug: string, status: number, body: ComposioResponse | null): string {
+  // Prefer explicit error/message fields; never echo arguments (may contain PII).
+  const detail = body?.error ?? body?.message ?? null;
+  const fix = body?.suggested_fix ?? null;
+  let msg = `actions: Composio ${toolSlug} failed (HTTP ${status})`;
+  if (detail) msg += `: ${detail}`;
+  if (fix) msg += ` — ${fix}`;
+  return msg;
 }
 
 async function executeTool(
@@ -93,12 +106,14 @@ async function executeTool(
     }),
   });
 
+  // Always try to parse the response body — Composio returns helpful error
+  // details (error, message, suggested_fix) even on non-2xx responses.
+  const payload = (await res.json().catch(() => null)) as ComposioResponse | null;
+
   if (!res.ok) {
-    // Surface status only — never echo the request body (may contain case facts).
-    throw new Error(`actions: Composio ${toolSlug} failed (HTTP ${res.status}).`);
+    throw new Error(safeComposioError(toolSlug, res.status, payload));
   }
 
-  const payload = (await res.json().catch(() => null)) as ComposioResponse | null;
   if (payload && payload.successful === false) {
     throw new Error(
       `actions: Composio ${toolSlug} reported failure${
