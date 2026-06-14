@@ -36,6 +36,3 @@ venv/
 *.log
 coverage/
 *.tsbuildinfo
-
-# wave 1 agent launcher (generated prompts; worktrees live in ../dp-trees)
-.wave1-prompts/
