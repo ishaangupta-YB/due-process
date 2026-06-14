@@ -31,6 +31,9 @@ __pycache__/
 venv/
 .pytest_cache/
 
+# devin per-worktree local tooling (machine-local, never commit)
+.devin/
+
 # misc
 .DS_Store
 *.log
