@@ -1,8 +1,14 @@
 packages:
   - "apps/web"
 
-# Approve native build scripts for these deps (pnpm v10+ blocks them by default).
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
-  - workerd
+# pnpm v11 gates dependency build (install/postinstall) scripts: any package whose
+# build script is "unreviewed" fails the install, because strictDepBuilds defaults to
+# true (this is the ERR_PNPM_IGNORED_BUILDS that broke the Cloudflare deploy).
+# v11 REMOVED `onlyBuiltDependencies` and replaced it with `allowBuilds` — a map of
+# package -> true|false. The old key is silently ignored on v11, so it must NOT be used.
+# Explicitly allow the build scripts we trust (esbuild + workerd download/verify the
+# bundler/runtime binaries; sharp builds Next.js image-optimization native bits).
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: true

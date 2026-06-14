@@ -110,6 +110,11 @@ Owns: `apps/eval/` only.
 
 ## Wave 2 — Dependent modules (after Wave 1 merge)
 
+**Wave 2 launch prep (done 2026-06-14):**
+- `scripts/setup-worktrees-wave2.sh` + `scripts/launch-wave2.sh` created (3 locked worktrees: `p2e-grounding` / `p2f-documents` / `p2g-persistence`; opus, P2-E at xhigh).
+- Deps pre-seeded on `main`: **`pdf-lib`** (P2-F, pure-JS Workers-OK). **`mem0ai` was tried and REVERTED** — it pulls native `better-sqlite3` which won't run on Workers. **P2-G must use the mem0 platform REST API via `fetch`** (verify endpoints/auth at docs.mem0.ai), not the SDK.
+- Lockfile: agents should add NO new deps; if one must, regenerate `pnpm-lock.yaml` via `pnpm install` at merge.
+
 ### P2-E — Grounded answer + abstention pipeline (depends on P1-A)
 Status: `[ ] TODO` — owns `lib/grounding.ts`, `app/api/answer/route.ts` + tests.
 
@@ -137,8 +142,8 @@ Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST.
 ## Human Action Items (blockers)
 
 - [x] **Commit P1-B/C/D worktrees** (done: `87cb7e1`, `7badfa7`, `892e16a`).
-- [x] **Fixed `pnpm-workspace.yaml`** (2026-06-14): removed the broken `allowBuilds` placeholder block; `pnpm test` now passes.
-- [ ] **Wire `app/api/intake/route.ts`** → `extractNoticeFacts` (unassigned; pick a Wave 2/3 owner).
+- [x] **Fixed `pnpm-workspace.yaml` build-scripts config** (2026-06-14): the Cloudflare deploy failed with `ERR_PNPM_IGNORED_BUILDS` (esbuild/sharp/workerd). Root cause: this repo pins **pnpm 11** (`packageManager`), which **removed `onlyBuiltDependencies`** and replaced it with **`allowBuilds`** (a `pkg: true|false` map); with `strictDepBuilds` defaulting to `true`, unreviewed build scripts hard-fail the install. Fix = `allowBuilds: { esbuild: true, sharp: true, workerd: true }`. Verified with a COLD `pnpm install --frozen-lockfile` (build scripts run, exit 0).
+- [x] **Wired `app/api/intake/route.ts`** → `extractNoticeFacts` (2026-06-14): handles JSON `{imageBase64,text,language}` + multipart `image` upload; extraction self-resolves the AI binding. tsc clean, tests green.
 - [ ] **Create + index AI Search** for production: run `scripts/upload-corpus.ts` with
   `CF_ACCOUNT_ID` + `CF_API_TOKEN` (AI Search Edit+Run). Confirm in dashboard
   (AI → AI Search → namespace `dueprocess-ca` → instance `dueprocess-prod` → indexing complete).
