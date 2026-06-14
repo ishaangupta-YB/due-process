@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Exec(git log)",
+      "Exec(find)",
+      "Exec(ls)",
+      "Exec(pnpm test)",
+      "Exec(pnpm typecheck)",
+      "Exec(pnpm build)"
+    ]
+  }
+}

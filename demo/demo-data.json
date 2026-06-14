@@ -1,0 +1,47 @@
+{
+  "_disclaimer": "SYNTHETIC demo data for DueProcess. The summons, parties, case number, address, and dates are invented for demonstration only. This is NOT a real court filing and NOT legal advice.",
+  "jurisdiction": "CA",
+  "notice": {
+    "image": "ca-summons-sum130.png",
+    "imageSource": "ca-summons-sum130.svg",
+    "description": "A realistic but synthetic California SUM-130 Summons (Unlawful Detainer) with an attached proof of service showing personal service.",
+    "expectedNoticeFacts": {
+      "noticeType": "Summons + Complaint (Unlawful Detainer)",
+      "serviceDateISO": "2026-06-08",
+      "serviceMethod": "personal",
+      "jurisdiction": "CA",
+      "parties": {
+        "landlord": "Skyline Ridge Apartments, LLC",
+        "tenant": "Maria Gonzalez"
+      },
+      "statedReason": "nonpayment of rent"
+    },
+    "note": "extraction.ts reads these from the image; values are perception output and may vary slightly. serviceDateISO + serviceMethod feed the deadline engine."
+  },
+  "deadline": {
+    "input": { "serviceDateISO": "2026-06-08", "serviceMethod": "personal" },
+    "expected": {
+      "responseDeadlineISO": "2026-06-23",
+      "courtDaysUsed": 10,
+      "rationale": "10 court days after personal service, counting from the day after service, skipping weekends and Juneteenth (observed 2026-06-19). Per CCP \u00a7 1167 as amended by AB 2347 (eff. 2025-01-01). The pre-2025 '5 days' rule is OUTDATED.",
+      "holidayCalendarVersion": "CA-courts-2026-2027",
+      "mustVerify": true
+    }
+  },
+  "questions": {
+    "inCorpus": {
+      "questionText": "How many days do I have to file my Answer after being served the Summons and Complaint?",
+      "language": "en",
+      "expectedStatus": "answered",
+      "expectedBehavior": "Grounded answer citing California Courts self-help + CCP \u00a7 1167; states 10 court days (current AB 2347 rule). >= 1 citation; legal-aid referral present.",
+      "demoPoint": "Shows the system answers ONLY when it has a cited source, and gives the CURRENT 10-day rule rather than the stale 5-day answer most models give."
+    },
+    "outOfCorpus": {
+      "questionText": "How do I get my security deposit back after I move out of my apartment?",
+      "language": "en",
+      "expectedStatus": "abstained",
+      "expectedBehavior": "Abstains (retrieval below the confidence gate against the eviction-response corpus) and refers the user to legal aid. citations: []. referral present.",
+      "demoPoint": "Shows the safety feature: rather than guess on a topic outside its indexed California eviction-response sources, it refuses and hands off."
+    }
+  }
+}

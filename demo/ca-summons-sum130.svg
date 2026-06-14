@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="850" height="1100" viewBox="0 0 850 1100" font-family="Helvetica, Arial, sans-serif">
+  <rect width="850" height="1100" fill="#ffffff"/>
+
+  <!-- SYNTHETIC watermark -->
+  <text x="425" y="560" font-size="46" fill="#d11" opacity="0.12" text-anchor="middle"
+        transform="rotate(-28 425 560)" font-weight="bold">SYNTHETIC DEMO — NOT A REAL FILING</text>
+
+  <!-- Outer border -->
+  <rect x="24" y="24" width="802" height="1052" fill="none" stroke="#000" stroke-width="1.5"/>
+
+  <!-- Header row: form code + title -->
+  <text x="40" y="52" font-size="12" font-weight="bold">SUM-130</text>
+  <text x="425" y="58" font-size="17" font-weight="bold" text-anchor="middle">SUMMONS</text>
+  <text x="425" y="78" font-size="14" font-weight="bold" text-anchor="middle">(UNLAWFUL DETAINER — EVICTION)</text>
+  <text x="425" y="96" font-size="11" font-style="italic" text-anchor="middle" fill="#333">(CITACIÓN JUDICIAL — RETENCIÓN ILÍCITA DE UN INMUEBLE — DESALOJO)</text>
+
+  <!-- FOR COURT USE ONLY box -->
+  <rect x="600" y="36" width="210" height="60" fill="none" stroke="#000" stroke-width="1"/>
+  <text x="705" y="52" font-size="8" text-anchor="middle" fill="#555">FOR COURT USE ONLY</text>
+  <text x="705" y="64" font-size="8" text-anchor="middle" fill="#555">(SÓLO PARA USO DE LA CORTE)</text>
+  <text x="610" y="82" font-size="9" fill="#777">FILED — Superior Court</text>
+  <text x="610" y="92" font-size="9" fill="#777">Alameda County · 06/05/2026</text>
+
+  <line x1="24" y1="108" x2="826" y2="108" stroke="#000" stroke-width="1"/>
+
+  <!-- NOTICE TO DEFENDANT -->
+  <text x="40" y="128" font-size="12" font-weight="bold">NOTICE TO DEFENDANT (AVISO AL DEMANDADO):</text>
+  <rect x="40" y="138" width="500" height="34" fill="none" stroke="#000" stroke-width="0.8"/>
+  <text x="50" y="160" font-size="14" font-weight="bold">MARIA GONZALEZ; and DOES 1 to 5</text>
+
+  <text x="40" y="196" font-size="12" font-weight="bold">YOU ARE BEING SUED BY PLAINTIFF (LO ESTÁ DEMANDANDO EL DEMANDANTE):</text>
+  <rect x="40" y="206" width="500" height="34" fill="none" stroke="#000" stroke-width="0.8"/>
+  <text x="50" y="228" font-size="14" font-weight="bold">SKYLINE RIDGE APARTMENTS, LLC</text>
+
+  <!-- Big NOTICE banner -->
+  <rect x="40" y="256" width="770" height="86" fill="#f4f4f4" stroke="#000" stroke-width="1"/>
+  <text x="52" y="280" font-size="13" font-weight="bold">NOTICE! You have been sued. The court may decide against you without your being</text>
+  <text x="52" y="298" font-size="13" font-weight="bold">heard unless you respond within 10 court days.</text>
+  <text x="52" y="318" font-size="11" font-style="italic" fill="#333">¡AVISO! Lo han demandado. Si no responde dentro de 10 días de corte, la corte puede</text>
+  <text x="52" y="332" font-size="11" font-style="italic" fill="#333">decidir en su contra sin escuchar su versión.</text>
+
+  <!-- Body text -->
+  <text x="40" y="368" font-size="11.5">You have 10 CALENDAR/COURT DAYS after this summons and legal papers are served on</text>
+  <text x="40" y="385" font-size="11.5">you to file a written response (an Answer, form UD-105) at this court and have a copy</text>
+  <text x="40" y="402" font-size="11.5">served on the plaintiff. A letter or phone call will not protect you. If you do not file</text>
+  <text x="40" y="419" font-size="11.5">your response on time, you may lose the case by default, and your wages, money, and</text>
+  <text x="40" y="436" font-size="11.5">property may be taken without further warning from the court.</text>
+
+  <!-- Court info -->
+  <line x1="24" y1="456" x2="826" y2="456" stroke="#000" stroke-width="1"/>
+  <text x="40" y="478" font-size="11" font-weight="bold">The name and address of the court is (El nombre y dirección de la corte es):</text>
+  <text x="40" y="500" font-size="12">SUPERIOR COURT OF CALIFORNIA, COUNTY OF ALAMEDA</text>
+  <text x="40" y="518" font-size="12">René C. Davidson Courthouse, 1225 Fallon Street, Oakland, CA 94612</text>
+  <text x="560" y="500" font-size="11" font-weight="bold">CASE NUMBER (Número del Caso):</text>
+  <rect x="560" y="508" width="250" height="28" fill="none" stroke="#000" stroke-width="0.8"/>
+  <text x="570" y="528" font-size="13" font-weight="bold">RG26-948217</text>
+
+  <text x="40" y="552" font-size="11" font-weight="bold">The name, address, and telephone number of plaintiff's attorney is:</text>
+  <text x="40" y="572" font-size="12">Harlan Vance, Esq. (SBN 204118), Vance &amp; Croft LLP</text>
+  <text x="40" y="590" font-size="12">500 Harrison Street, Suite 210, Oakland, CA 94607 · (510) 555-0173</text>
+
+  <!-- Basis of complaint -->
+  <line x1="24" y1="610" x2="826" y2="610" stroke="#000" stroke-width="1"/>
+  <text x="40" y="632" font-size="11" font-weight="bold">The complaint (form UD-100) alleges (La demanda alega):</text>
+  <text x="58" y="654" font-size="12">☒ Nonpayment of rent — amount demanded in the 3-day notice: $4,180.00</text>
+  <text x="58" y="674" font-size="12">☐ Other tenancy violation</text>
+  <text x="40" y="700" font-size="11">Premises: 2240 Edgewater Drive, Apt. 4C, Oakland, CA 94606</text>
+
+  <!-- Date / clerk -->
+  <line x1="24" y1="720" x2="826" y2="720" stroke="#000" stroke-width="1"/>
+  <text x="40" y="742" font-size="11">Date (Fecha): June 5, 2026</text>
+  <text x="430" y="742" font-size="11">Clerk (Secretario): A. Romero, Deputy</text>
+
+  <!-- PROOF OF SERVICE -->
+  <rect x="40" y="762" width="770" height="150" fill="none" stroke="#000" stroke-width="1.2"/>
+  <text x="425" y="784" font-size="13" font-weight="bold" text-anchor="middle">PROOF OF SERVICE OF SUMMONS</text>
+  <line x1="40" y1="794" x2="810" y2="794" stroke="#000" stroke-width="0.6"/>
+  <text x="52" y="816" font-size="11.5">1. I served the Summons and Complaint on the defendant as follows:</text>
+  <text x="70" y="838" font-size="12" font-weight="bold">☒ a. by PERSONAL SERVICE. I personally delivered the documents to the defendant.</text>
+  <text x="70" y="858" font-size="12">☐ b. by substituted service.    ☐ c. by posting and mailing.</text>
+  <text x="52" y="884" font-size="12" font-weight="bold">2. Date of service (Fecha en que se entregó): June 8, 2026</text>
+  <text x="52" y="903" font-size="11">3. Person who served papers: D. Whitfield, Reg. Process Server, Alameda Co. #2024-118</text>
+
+  <!-- Footer -->
+  <line x1="24" y1="1006" x2="826" y2="1006" stroke="#000" stroke-width="1"/>
+  <text x="40" y="1028" font-size="9" fill="#555">Form Adopted for Mandatory Use · Judicial Council of California · SUM-130 [Rev. January 1, 2025]</text>
+  <text x="40" y="1044" font-size="9" fill="#555">Code of Civil Procedure §§ 412.20, 415.46, 1167</text>
+  <text x="700" y="1044" font-size="10" font-weight="bold" fill="#d11">DEMO DATA</text>
+</svg>
