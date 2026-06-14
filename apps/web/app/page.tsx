@@ -118,10 +118,10 @@ export default function Home() {
   }
 
   return (
-    <>
-      <header style={{ marginBottom: "1.5rem" }}>
-        <h1>You were served eviction papers. Let&apos;s respond in time.</h1>
-        <p className="lead">
+    <div className="app-flow">
+      <header className="hero" style={{ marginBottom: "2.5rem", textAlign: "center", maxWidth: "650px", margin: "0 auto 3rem auto" }}>
+        <h1 style={{ marginBottom: "1rem" }}>You were served eviction papers.<br/>Let&apos;s respond in time.</h1>
+        <p className="lead" style={{ margin: "0 auto" }}>
           DueProcess helps California tenants understand their court papers,
           find their response deadline, and prepare a draft Answer — calmly, in
           plain language. It is information and document prep, not legal advice.
@@ -161,12 +161,12 @@ export default function Home() {
       )}
 
       {facts && (
-        <div className="btn-row" style={{ marginTop: "0.5rem" }}>
+        <div className="btn-row" style={{ marginTop: "2rem", justifyContent: "center" }}>
           <button type="button" className="btn btn--secondary" onClick={reset}>
             Start over with a new notice
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }

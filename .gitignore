@@ -46,3 +46,7 @@ output-p2g.txt
 
 # local-only testing runbook (contains the live URL; intentionally NOT committed)
 TESTING.md
+
+# internal docs (not for the public repo)
+DEVPOST.md
+HANDOFF.md

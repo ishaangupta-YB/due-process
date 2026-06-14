@@ -1,5 +1,19 @@
 import type { Metadata } from "next";
+import { Instrument_Serif, Inter } from "next/font/google";
 import "./globals.css";
+
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "DueProcess — California eviction response help",
@@ -11,7 +25,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`}>
       <body>
         <a className="skip-link" href="#main">
           Skip to main content
@@ -19,12 +33,10 @@ export default function RootLayout({
         <div className="page">
           <header className="site-header">
             <div className="site-header__inner">
-              <span className="brand">
-                <span className="brand__mark" aria-hidden="true">
-                  DP
-                </span>
+              <a href="/" className="brand">
+                <span className="brand__mark" aria-hidden="true">DP</span>
                 DueProcess
-              </span>
+              </a>
               <span className="brand__tag">California • Tenant help</span>
             </div>
           </header>
@@ -42,6 +54,10 @@ export default function RootLayout({
                 clinic. Deadlines shown are estimates — always confirm with the
                 court.
               </p>
+              <div className="footer-credits">
+                <span>Built by Ishaan Gupta</span>
+                <a href="https://github.com/ishaangupta-YB/due-process.git" target="_blank" rel="noopener noreferrer">Open source</a>
+              </div>
             </div>
           </footer>
         </div>
