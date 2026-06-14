@@ -172,10 +172,17 @@ Owns: `app/` UI (page/layout/globals + 6 components) + the in-lane `app/api/dead
 - [ ] Full Q&A citations + PDF download need the deployed env (AI Search index + D1 + R2); locally they degrade gracefully by design.
 
 ### P3-I — Enhancements: Composio actions + voice/multilingual (cuttable)
-Status: `[ ] TODO` — owns `lib/actions.ts`, `app/api/actions/*`, voice intake. **Phase 2 (start after P3-H — done).**
+Status: `[x] DONE` — merged to `main` (`755fc32`, branch `p3i-enhancements` `497690e`). In-lane, **no shared-contract changes**, `tsc` clean, 92/92 tests.
+- [x] Composio actions `lib/actions.ts` (+ `app/api/actions/email-clinic`, `reminder`, `ActionsStep.tsx`): `emailClinic` (GMAIL_SEND_EMAIL) + `createReminder` (GOOGLECALENDAR_CREATE_EVENT). Double consent (zod `consent:true` + UI checkbox); env-configurable slugs/accounts/base-URL/timezone; status-only logging. Live demo needs `COMPOSIO_API_KEY` + connected Gmail/Calendar.
+- [x] Voice + multilingual intake `lib/stt.ts` (+ intake route + `IntakeStep.tsx` "Speak it"): `transcribeAudio` via `MODELS.STT` (Whisper) default, opt-in `MODELS.STT_MULTILINGUAL` (Deepgram nova-3) via `STT_ENGINE`. Perception-only; feeds transcript into the same extraction → multilingual NoticeFacts → same-language answers. Graceful failure when unconfigured (no 500s on CORE path).
 
 ### P3-J — End-to-end pass, eval run, README + Devpost
-Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST. **Phase 2 (start after P3-H — done).**
+Status: `[x] DONE` — merged to `main` (`1767636`, branch `p3j-eval-readme` `eed6d89`). 77 web + 35 eval tests, `tsc`/`next build` clean.
+- [x] Demo-proofed the full CORE path against REAL models/services (intake→deadline→grounded Q&A): real Llama 4 Scout extraction, real deadline engine (2026-06-08 personal → 2026-06-23, skips Juneteenth), real AI Search grounding (in-corpus answers w/ citations, out-of-corpus abstains).
+- [x] Scripted demo dataset `demo/` (watermarked synthetic CA SUM-130 svg+png + `demo-data.json` with expected facts + in/out-of-corpus questions).
+- [x] Real controlled eval (reglab/housing_qa, 50 CA Qs, k=5, 20% holdout, 0 endpoint errors) — answer acc **0.65**, abstention **0.60** (0.30 over-answer), citation hit@5 **0.24**. Honestly modest + caveated (2021 dataset; run used fallback `gpt-oss` because kimi-k2.6 was capacity-flaky). README + DEVPOST (495 words) carry the numbers + disclosures. Throwaway eval instance torn down; production untouched.
+- [x] **Decision (approved):** used the thin eval endpoint `apps/web/scripts/eval-endpoint.ts` (sanctioned by `apps/eval/CLAUDE.md`) instead of adding eval routing to `/api/answer` + `ai-search.ts` — keeps the safety-critical product path + shared contract untouched and all 77 tests valid. Keep as-is.
+- [x] Merge gotcha fixed: both P3-I/P3-J committed `.devin/config.local.json` (machine-local Devin tooling) → add/add conflict on the P3-J merge. Resolved by untracking it + adding `.devin/` to `.gitignore`.
 
 ---
 
@@ -214,3 +221,4 @@ Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST. **Phase 2 (s
 | 2026-06-14 | `main` | Reviewed + merged Wave 2 (P2-E/F/G) via git: lanes clean, contracts match (`getCase`, `CaseDO`), citations code-enforced, DO past-alarm guard, mem0 REST. Verified `response_format` shape + kimi structured-output support vs Cloudflare docs. Merged G→E→F, `tsc` clean, **77/77 tests pass**. | Cascade |
 | 2026-06-14 | `main` | Reviewed + merged P3-H (`3bf4029`): in-lane (`app/` only), `api/deadline` thin pass-through, no contract change. Added `next.config.ts` dev-init guard (`65bac58`). `tsc` clean, **77/77 tests**, `next build` OK w/o CF auth. AI Search upload + D1 migration attempted but BLOCKED: CF token 403/401 (not authenticating). | Cascade |
 | 2026-06-14 | `main` | Infra setup DONE with corrected token: AI Search instance `dueprocess-prod` created + 13 corpus files uploaded/queued for indexing; D1 migration `0001_init.sql` applied to remote `dueprocess` (5 cmds ✅). | Cascade |
+| 2026-06-14 | `main` | Merged P3-I (`755fc32`) + P3-J (`1767636`). Resolved add/add conflict on `.devin/config.local.json` (untracked + gitignored). Verified **zero** changes to shared contracts (`types.ts`/`models.ts`/`migrations`/`wrangler.jsonc`/`worker.ts`) across all of Wave 3. `tsc` clean, **92/92 web tests**. P3-J reports 35 eval tests + real eval metrics (answer 0.65 / abstention 0.60 / hit@5 0.24). | Cascade |
