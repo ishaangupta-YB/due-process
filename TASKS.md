@@ -162,13 +162,20 @@ Owns: `lib/db.ts`, `lib/memory.ts`, `durable-objects/case-do.ts`, `app/api/case/
 ## Wave 3 — Integration
 
 ### P3-H — Frontend flow (the demo path)
-Status: `[ ] TODO` — owns `app/` UI; wires existing routes; 4 CORE features.
+Status: `[x] DONE` — merged to `main` (`3bf4029`, branch `p3h-frontend` `497a5ce`). In-lane (only `app/`); `tsc` clean, 77/77 tests, `next build` succeeds.
+Owns: `app/` UI (page/layout/globals + 6 components) + the in-lane `app/api/deadline/route.ts` wire-up.
+
+- [x] 4 CORE steps as components: `IntakeStep`, `NoticeFactsStep` + `DeadlineCountdown`, `RightsChat` (+ safe `Markdown` renderer w/ clickable .gov citations + distinct abstention UI), `DocumentStep` (watermarked UD-105 download). Orchestrated in `page.tsx`.
+- [x] `layout.tsx` skip-link + persistent footer disclaimer (not a lawyer / drafts only); `globals.css` calm high-contrast accessible theme (18px, focus rings, mobile-first, reduced-motion).
+- [x] In-lane backend wire-up: `app/api/deadline/route.ts` (was 501) → thin zod-validated pass-through to `computeResponseDeadline`. NO `lib/*` signature/contract change (verified: shared-contract diff empty); LLM still never computes the deadline.
+- [x] Foundation fix applied separately (`65bac58`): `next.config.ts` guards `initOpenNextCloudflareForDev()` to `NODE_ENV==='development'` so `next build` runs without CF auth (P3-H flagged it; standard OpenNext pattern, zero dev-behaviour change).
+- [ ] Full Q&A citations + PDF download need the deployed env (AI Search index + D1 + R2); locally they degrade gracefully by design.
 
 ### P3-I — Enhancements: Composio actions + voice/multilingual (cuttable)
-Status: `[ ] TODO` — owns `lib/actions.ts`, `app/api/actions/*`, voice intake.
+Status: `[ ] TODO` — owns `lib/actions.ts`, `app/api/actions/*`, voice intake. **Phase 2 (start after P3-H — done).**
 
 ### P3-J — End-to-end pass, eval run, README + Devpost
-Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST.
+Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST. **Phase 2 (start after P3-H — done).**
 
 ---
 
@@ -177,13 +184,12 @@ Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST.
 - [x] **Commit P1-B/C/D worktrees** (done: `87cb7e1`, `7badfa7`, `892e16a`).
 - [x] **Fixed `pnpm-workspace.yaml` build-scripts config** (2026-06-14): the Cloudflare deploy failed with `ERR_PNPM_IGNORED_BUILDS` (esbuild/sharp/workerd). Root cause: this repo pins **pnpm 11** (`packageManager`), which **removed `onlyBuiltDependencies`** and replaced it with **`allowBuilds`** (a `pkg: true|false` map); with `strictDepBuilds` defaulting to `true`, unreviewed build scripts hard-fail the install. Fix = `allowBuilds: { esbuild: true, sharp: true, workerd: true }`. Verified with a COLD `pnpm install --frozen-lockfile` (build scripts run, exit 0).
 - [x] **Wired `app/api/intake/route.ts`** → `extractNoticeFacts` (2026-06-14): handles JSON `{imageBase64,text,language}` + multipart `image` upload; extraction self-resolves the AI binding. tsc clean, tests green.
-- [ ] **Create + index AI Search** for production: run `scripts/upload-corpus.ts` with
-  `CF_ACCOUNT_ID` + `CF_API_TOKEN` (AI Search Edit+Run). Confirm in dashboard
-  (AI → AI Search → namespace `dueprocess-ca` → instance `dueprocess-prod` → indexing complete).
+- [!] **Create + index AI Search** — BLOCKED on a valid token. Ran `scripts/upload-corpus.ts` 2026-06-14: Cloudflare returned **403/401 (Authentication error)** on instance create; `/user/tokens/verify` failed and `/accounts/{id}/autorag/rags` = 401. The `CF_API_TOKEN` is not authenticating. **FIX:** create a real Cloudflare **API Token** (My Profile → API Tokens) scoped Account → *AI Search (AutoRAG): Edit* (+ *D1: Edit*, *Workers AI: Read*), confirm `CF_ACCOUNT_ID` is the 32-char account id, put both in `apps/web/.dev.vars`, then re-run. (The leaked `cfut_…` token must be rotated regardless.)
 - [x] **AI Search naming reconciled** (verified 2026-06-14): `dueprocess-ca` is the namespace, `dueprocess-prod` is the instance inside it. Correct, no change needed.
 - [ ] **Add secrets** in Cloudflare dashboard (prod) + local `.dev.vars`:
   `MEM0_API_KEY`, `COMPOSIO_API_KEY`, optional `NEBIUS_API_KEY`.
-- [ ] **Apply D1 migration** `0001_init.sql` to the `dueprocess` DB.
+- [ ] **Apply D1 migration** `0001_init.sql` to the `dueprocess` DB: `pnpm -C apps/web exec wrangler d1 migrations apply dueprocess --remote` (needs a token with D1:Edit or `wrangler login`; same token blocker as AI Search above).
+- [x] **`next build` without CF auth** — fixed via the `next.config.ts` dev-init guard (`65bac58`).
 
 ## Risks / things to verify (not from memory — confirm against live docs)
 
@@ -206,3 +212,4 @@ Status: `[ ] TODO` — demo-proof + real metrics in README/DEVPOST.
 | 2026-06-14 | (docs) | Verified AI Search API against developers.cloudflare.com: runtime binding/search/response shapes + namespaced REST upload endpoints + custom_metadata schema all match `ai-search.ts`/`upload-corpus.ts`. Retracted earlier naming-mismatch concern. | Cascade |
 | 2026-06-14 | `main` | Merged all 4 Wave 1 branches (no conflicts). Applied deadline decision (non-personal = earliest date). Fixed pnpm-workspace.yaml. `tsc --noEmit` clean, `pnpm test` 26/26 pass. | Cascade |
 | 2026-06-14 | `main` | Reviewed + merged Wave 2 (P2-E/F/G) via git: lanes clean, contracts match (`getCase`, `CaseDO`), citations code-enforced, DO past-alarm guard, mem0 REST. Verified `response_format` shape + kimi structured-output support vs Cloudflare docs. Merged G→E→F, `tsc` clean, **77/77 tests pass**. | Cascade |
+| 2026-06-14 | `main` | Reviewed + merged P3-H (`3bf4029`): in-lane (`app/` only), `api/deadline` thin pass-through, no contract change. Added `next.config.ts` dev-init guard (`65bac58`). `tsc` clean, **77/77 tests**, `next build` OK w/o CF auth. AI Search upload + D1 migration attempted but BLOCKED: CF token 403/401 (not authenticating). | Cascade |
