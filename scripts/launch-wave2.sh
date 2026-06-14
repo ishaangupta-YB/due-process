@@ -2,15 +2,15 @@
 #
 # launch-wave2.sh — DueProcess Wave 2: open tmux + start a Devin session per task
 # -----------------------------------------------------------------------------
-# Opens one tmux window per Wave 2 worktree and starts a Devin CLI session in
-# each with the right model. It does NOT create worktrees (run
-# scripts/setup-worktrees-wave2.sh first) and it does NOT inject prompts — each
-# Devin session starts empty so YOU paste its P2 prompt from DEVIN_PROMPTS.md.
+# Opens ONE tmux window split into one labeled pane per Wave 2 worktree (LAYOUT=panes,
+# the default) and starts a Devin CLI session in each pane with the right model. It
+# does NOT create worktrees (run scripts/setup-worktrees-wave2.sh first) and it does
+# NOT inject prompts — each Devin session starts empty so YOU paste its P2 prompt.
 #
 #   Wave 2 tasks  (paste prompts from DEVIN_PROMPTS.md):
-#     window p2e-grounding     P2-E  grounded answer + abstention  -> opus (xhigh)
-#     window p2f-documents     P2-F  UD-105 draft -> PDF -> R2      -> opus (high)
-#     window p2g-persistence   P2-G  D1 + Durable Object + mem0     -> opus (high)
+#     pane p2e-grounding     P2-E  grounded answer + abstention  -> opus (xhigh)
+#     pane p2f-documents     P2-F  UD-105 draft -> PDF -> R2      -> opus (high)
+#     pane p2g-persistence   P2-G  D1 + Durable Object + mem0     -> opus (high)
 #
 # P2-E (cite-or-abstain) is the safety heart, so it gets the highest thinking.
 #
@@ -25,7 +25,7 @@
 #   OPUS_MODEL=...             full model slug override for F/G
 #   OPUS_E_MODEL=...           full model slug override for E
 #   AUTOSTART=true|false       auto-press Enter to launch Devin in each pane (default: true)
-#   LAYOUT=windows|panes       tmux layout (default: windows)
+#   LAYOUT=panes|windows       tmux layout (default: panes = one window, split panes)
 # -----------------------------------------------------------------------------
 set -euo pipefail
 
@@ -37,7 +37,7 @@ OPUS_MODEL="${OPUS_MODEL:-claude-opus-4-8-${THINK}}"       # F, G
 OPUS_E_MODEL="${OPUS_E_MODEL:-claude-opus-4-8-${THINK_E}}" # E
 PERMISSION_MODE="auto"                                     # fixed: you approve commands/writes
 AUTOSTART="${AUTOSTART:-true}"
-LAYOUT="${LAYOUT:-windows}"                                # windows | panes
+LAYOUT="${LAYOUT:-panes}"                                  # panes (one window) | windows
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -111,36 +111,55 @@ for row in "${AGENTS[@]}"; do
 done
 
 say "Starting tmux session '$SESSION' (layout=$LAYOUT)"
-tmux new-session -d -s "$SESSION" -n "${LABELS[0]}" -c "${PATHS[0]}"
-send_or_type "$SESSION:${LABELS[0]}" "$(devin_cmd "${MODELS[0]}")"
 
-for i in $(seq 1 $(( ${#LABELS[@]} - 1 ))); do
-  if [ "$LAYOUT" = "panes" ]; then
-    tmux split-window -t "$SESSION:0" -c "${PATHS[$i]}"
-    tmux select-layout -t "$SESSION:0" tiled
-    send_or_type "$SESSION:0" "$(devin_cmd "${MODELS[$i]}")"
-  else
+if [ "$LAYOUT" = "panes" ]; then
+  # ONE window ('wave2'); one pane per agent, tiled. Each pane border is labeled so
+  # you can tell which agent is which when you paste prompts. Pane ids are captured
+  # explicitly so send-keys always targets the right pane regardless of layout.
+  tmux new-session -d -s "$SESSION" -n "wave2" -c "${PATHS[0]}"
+  tmux set-option -w -t "$SESSION:wave2" pane-border-status top 2>/dev/null || true
+  tmux set-option -w -t "$SESSION:wave2" pane-border-format " #{pane_index}: #{pane_title} " 2>/dev/null || true
+
+  first_pane="$(tmux display-message -p -t "$SESSION:wave2" '#{pane_id}')"
+  tmux select-pane -t "$first_pane" -T "${LABELS[0]} -> ${MODELS[0]}"
+  send_or_type "$first_pane" "$(devin_cmd "${MODELS[0]}")"
+
+  for i in $(seq 1 $(( ${#LABELS[@]} - 1 ))); do
+    pane_id="$(tmux split-window -t "$SESSION:wave2" -c "${PATHS[$i]}" -P -F '#{pane_id}')"
+    tmux select-layout -t "$SESSION:wave2" tiled >/dev/null
+    tmux select-pane -t "$pane_id" -T "${LABELS[$i]} -> ${MODELS[$i]}"
+    send_or_type "$pane_id" "$(devin_cmd "${MODELS[$i]}")"
+  done
+  tmux select-pane -t "$first_pane"   # focus the first agent
+else
+  # one window per agent
+  tmux new-session -d -s "$SESSION" -n "${LABELS[0]}" -c "${PATHS[0]}"
+  send_or_type "$SESSION:${LABELS[0]}" "$(devin_cmd "${MODELS[0]}")"
+  for i in $(seq 1 $(( ${#LABELS[@]} - 1 ))); do
     tmux new-window -t "$SESSION" -n "${LABELS[$i]}" -c "${PATHS[$i]}"
     send_or_type "$SESSION:${LABELS[$i]}" "$(devin_cmd "${MODELS[$i]}")"
-  fi
-done
+  done
+fi
 
 ok "Started ${#LABELS[@]} Devin sessions. Now paste each P2 prompt by hand."
 cat <<EOF
 
 ${c_grn}Wave 2 sessions are up.${c_rst}
   Attach:        tmux attach -t ${SESSION}
-  Switch window: Ctrl-b <number>   |  detach: Ctrl-b d
+  Move panes:    Ctrl-b o (cycle)  |  Ctrl-b <arrow>  |  zoom/unzoom a pane: Ctrl-b z
+  Detach:        Ctrl-b d   |   kill it all: tmux kill-session -t ${SESSION}
 
-Paste the matching block from DEVIN_PROMPTS.md into each window:
-  window 'p2e-grounding'    <- the "## P2-E" block   (model: ${OPUS_E_MODEL})
-  window 'p2f-documents'    <- the "## P2-F" block   (model: ${OPUS_MODEL})
-  window 'p2g-persistence'  <- the "## P2-G" block   (model: ${OPUS_MODEL})
+Each pane runs one agent (the pane border is labeled). Paste the matching block
+from DEVIN_PROMPTS.md into each pane (zoom with Ctrl-b z first if it's cramped):
+  pane 'p2e-grounding'    <- the "## P2-E" block   (model: ${OPUS_E_MODEL})
+  pane 'p2f-documents'    <- the "## P2-F" block   (model: ${OPUS_MODEL})
+  pane 'p2g-persistence'  <- the "## P2-G" block   (model: ${OPUS_MODEL})
 (also paste the "Global guardrails" block with each — it is load-bearing.)
 
-Deps note: pdf-lib (P2-F) and mem0ai (P2-G) are already in apps/web/package.json,
-so agents should NOT add new deps. If one does, regenerate the lockfile at merge
-(pnpm install) instead of resolving pnpm-lock.yaml by hand.
+Deps note: pdf-lib (P2-F) is already in apps/web/package.json — use it; add no new
+deps. P2-G must use the mem0 platform REST API via fetch (NOT the mem0ai SDK — it
+pulls native better-sqlite3 that won't run on Workers). If an agent must add a dep,
+regenerate pnpm-lock.yaml via 'pnpm install' at merge, don't hand-resolve it.
 
 When the whole wave is reviewed + committed on its branch, merge from the main repo,
 then unlock + remove each worktree:

@@ -36,3 +36,7 @@ venv/
 *.log
 coverage/
 *.tsbuildinfo
+
+output-p2e.txt
+output-p2f.txt
+output-p2g.txt
