@@ -1,15 +1,103 @@
 // lib/ai-search.ts — Cloudflare AI Search (RAG) retrieval wrapper.
-// STUB (P0). Wave 1 (P1-A) implements this. Confirm the binding name + query API
-// against https://developers.cloudflare.com/ai-search/ before coding.
+// Uses the namespace binding configured in wrangler.jsonc (ai_search_namespaces).
+// Retrieval type is hybrid (semantic + BM25) per acceptance criteria.
 
-import type { Citation } from "./types";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-export interface RetrievalResult {
-  citations: Citation[];
-  /** Aggregate retrieval confidence, 0..1, used by grounding to answer vs abstain. */
-  confidence: number;
+/**
+ * A single retrieved chunk with real source metadata.
+ * `url` and `title` come from the indexed item metadata — never synthesized.
+ */
+export interface RetrievedChunk {
+  sourceId: string;
+  title: string;
+  url: string;
+  snippet: string;
+  score: number;
 }
 
-export async function retrieve(_query: string): Promise<RetrievalResult> {
-  throw new Error("ai-search.retrieve: not implemented (P0 stub)");
+/* ------------------------------------------------------------------ */
+// Thin type shim for the AI Search namespace binding (avoids hand-writing
+// the full generated Env interface). Public API remains fully typed.
+
+interface AiSearchChunk {
+  id: string;
+  text: string;
+  score: number;
+  item: {
+    key: string;
+    metadata: Record<string, string>;
+  };
+}
+
+interface AiSearchInstance {
+  search(opts: {
+    messages: Array<{ role: string; content: string }>;
+    query?: string;
+    ai_search_options?: {
+      retrieval?: {
+        retrieval_type?: "vector" | "keyword" | "hybrid";
+        max_num_results?: number;
+        match_threshold?: number;
+        filters?: Record<string, unknown>;
+        metadata_only?: boolean;
+      };
+    };
+  }): Promise<{
+    search_query: string;
+    chunks: AiSearchChunk[];
+  }>;
+}
+
+interface AiSearchNamespaceBinding {
+  get(name: string): AiSearchInstance;
+}
+
+/* ------------------------------------------------------------------ */
+// The instance name must match the one created by scripts/upload-corpus.ts.
+// If you change it in one place, change it in the other.
+const INSTANCE_NAME = "dueprocess-prod";
+
+/**
+ * Retrieve relevant chunks from the CA legal corpus via Cloudflare AI Search.
+ *
+ * @param query — natural-language question
+ * @param k     — max results to return (default 5)
+ * @returns typed chunks with real `url` and `title` from source metadata
+ */
+export async function retrieve(
+  query: string,
+  k?: number
+): Promise<RetrievedChunk[]> {
+  const { env } = getCloudflareContext();
+
+  // Extract the namespace binding. The wrangler.jsonc names it "AI_SEARCH".
+  const binding = (env as Record<string, unknown>)
+    .AI_SEARCH as AiSearchNamespaceBinding;
+  if (!binding) {
+    throw new Error(
+      "ai-search.retrieve: AI_SEARCH binding missing. Check wrangler.jsonc."
+    );
+  }
+
+  const instance = binding.get(INSTANCE_NAME);
+
+  const results = await instance.search({
+    messages: [{ role: "user", content: query }],
+    ai_search_options: {
+      retrieval: {
+        retrieval_type: "hybrid",
+        max_num_results: k ?? 5,
+        match_threshold: 0.4,
+      },
+    },
+  });
+
+  return results.chunks.map((chunk) => ({
+    sourceId: chunk.id,
+    title: chunk.item.metadata.title ?? chunk.item.key ?? "",
+    url: chunk.item.metadata.url ?? "",
+    snippet: chunk.text ?? "",
+    score: chunk.score ?? 0,
+  }));
 }
