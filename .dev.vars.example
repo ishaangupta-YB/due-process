@@ -3,6 +3,7 @@
 # In production, set these with `wrangler secret put <NAME>` or in the Cloudflare
 # dashboard (see SETUP_AND_OPS.md §4.6).
 CF_ACCOUNT_ID=
+CF_API_TOKEN=
 # mem0 — longitudinal case memory (lib/memory.ts)
 MEM0_API_KEY=
 
